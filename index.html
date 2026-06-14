@@ -1686,122 +1686,7 @@ function buildPrintWindow(isTeacher) {
     content += '</div>';
   }
   content += '<script>window.print();window.onafterprint=function(){window.close();}<\/script>';
-  content += '
-<!-- === MTC FIREBASE SYNC - ADDED BY META AI - DO NOT REMOVE === -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD22_KYAqZxgJnEIRd1BrtoApcjM9DT6I0",
-  authDomain: "mtc-exams.firebaseapp.com",
-  databaseURL: "https://mtc-exams-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "mtc-exams",
-  storageBucket: "mtc-exams.firebasestorage.app",
-  messagingSenderId: "301948043220",
-  appId: "1:301948043220:web:29494d7d52a283775f2041"
-};
-
-let db, firebaseStatus = 'connecting';
-try {
-  const app = initializeApp(firebaseConfig);
-  db = getDatabase(app);
-  firebaseStatus = 'connected';
-  console.log('MTC Firebase connected to Europe');
-} catch(e) {
-  console.error('Firebase init failed', e);
-  firebaseStatus = 'error';
-}
-
-function updateCloudStatus() {
-  const el = document.getElementById('mtc-cloud-status');
-  if (!el) return;
-  const dot = el.querySelector('.dot');
-  const txt = el.querySelector('.txt');
-  if (firebaseStatus === 'connected') {
-    dot.style.background = '#1a7a3f';
-    txt.innerHTML = 'Cloud: <b>Connected</b> • Europe (Belgium) • ' + new Date().toLocaleTimeString();
-  } else if (firebaseStatus === 'connecting') {
-    dot.style.background = '#c9a227';
-    txt.textContent = 'Cloud: Connecting...';
-  } else {
-    dot.style.background = '#c0392b';
-    txt.textContent = 'Cloud: Offline';
-  }
-}
-
-// Add status UI to Settings tab
-window.addEventListener('load', () => {
-  const settingsTab = document.getElementById('tab-settings');
-  if (settingsTab && !document.getElementById('mtc-cloud-status')) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="card-title">☁️ Cloud Sync Status</div>
-      <div id="mtc-cloud-status" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;">
-        <span class="dot" style="width:10px;height:10px;border-radius:50%;background:#8899cc;display:inline-block;"></span>
-        <span class="txt">Cloud: Initializing...</span>
-      </div>
-      <div style="margin-top:8px;font-size:0.75rem;color:#aab4d4;">Database: mtc-exams-default-rtdb.europe-west1.firebasedatabase.app</div>
-    `;
-    settingsTab.appendChild(card);
-    updateCloudStatus();
-    setInterval(updateCloudStatus, 5000);
-  }
-
-  // Patch saveToBank
-  if (typeof window.saveToBank === 'function') {
-    const orig = window.saveToBank;
-    window.saveToBank = function() {
-      const result = orig.apply(this, arguments);
-      try {
-        // After original save, push to Firebase
-        setTimeout(() => {
-          if (!db) return;
-          const bank = JSON.parse(localStorage.getItem('mtc_bank') || '{}');
-          const lastKey = 'mtc_last_saved';
-          const payload = {
-            bank: bank,
-            updatedAt: new Date().toISOString(),
-            by: 'Mr F. Tembo'
-          };
-          set(ref(db, 'mtc_exams/live_bank'), payload)
-            .then(() => {
-              firebaseStatus = 'connected';
-              updateCloudStatus();
-              console.log('Synced to Firebase Europe');
-            })
-            .catch(e => {
-              firebaseStatus = 'error';
-              console.error('Sync failed', e);
-            });
-          localStorage.setItem(lastKey, Date.now());
-        }, 300);
-      } catch(e) { console.error(e); }
-      return result;
-    };
-  }
-
-  // Listen for remote changes
-  if (db) {
-    onValue(ref(db, 'mtc_exams/live_bank'), (snap) => {
-      const data = snap.val();
-      if (data && data.bank) {
-        // Don't overwrite if we just saved
-        const last = parseInt(localStorage.getItem('mtc_last_saved')||'0');
-        if (Date.now() - last > 5000) {
-          localStorage.setItem('mtc_bank', JSON.stringify(data.bank));
-          if (typeof window.renderBank === 'function') window.renderBank();
-          console.log('Bank updated from cloud');
-        }
-      }
-    });
-  }
-});
-</script>
-<!-- === END FIREBASE SYNC === -->
-
-</body></html>';
+  content += '</body></html>';
   win.document.write(content);
   win.document.close();
 }
@@ -2417,122 +2302,7 @@ function buildPublishedExam(s, qs, logoB64, qsJSON, sJSON) {
   pub += '<script>\n';
   pub += sc;
   pub += '\n<' + '/script>\n';   // split to avoid HTML parser ending the script tag
-  pub += '
-<!-- === MTC FIREBASE SYNC - ADDED BY META AI - DO NOT REMOVE === -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD22_KYAqZxgJnEIRd1BrtoApcjM9DT6I0",
-  authDomain: "mtc-exams.firebaseapp.com",
-  databaseURL: "https://mtc-exams-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "mtc-exams",
-  storageBucket: "mtc-exams.firebasestorage.app",
-  messagingSenderId: "301948043220",
-  appId: "1:301948043220:web:29494d7d52a283775f2041"
-};
-
-let db, firebaseStatus = 'connecting';
-try {
-  const app = initializeApp(firebaseConfig);
-  db = getDatabase(app);
-  firebaseStatus = 'connected';
-  console.log('MTC Firebase connected to Europe');
-} catch(e) {
-  console.error('Firebase init failed', e);
-  firebaseStatus = 'error';
-}
-
-function updateCloudStatus() {
-  const el = document.getElementById('mtc-cloud-status');
-  if (!el) return;
-  const dot = el.querySelector('.dot');
-  const txt = el.querySelector('.txt');
-  if (firebaseStatus === 'connected') {
-    dot.style.background = '#1a7a3f';
-    txt.innerHTML = 'Cloud: <b>Connected</b> • Europe (Belgium) • ' + new Date().toLocaleTimeString();
-  } else if (firebaseStatus === 'connecting') {
-    dot.style.background = '#c9a227';
-    txt.textContent = 'Cloud: Connecting...';
-  } else {
-    dot.style.background = '#c0392b';
-    txt.textContent = 'Cloud: Offline';
-  }
-}
-
-// Add status UI to Settings tab
-window.addEventListener('load', () => {
-  const settingsTab = document.getElementById('tab-settings');
-  if (settingsTab && !document.getElementById('mtc-cloud-status')) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="card-title">☁️ Cloud Sync Status</div>
-      <div id="mtc-cloud-status" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;">
-        <span class="dot" style="width:10px;height:10px;border-radius:50%;background:#8899cc;display:inline-block;"></span>
-        <span class="txt">Cloud: Initializing...</span>
-      </div>
-      <div style="margin-top:8px;font-size:0.75rem;color:#aab4d4;">Database: mtc-exams-default-rtdb.europe-west1.firebasedatabase.app</div>
-    `;
-    settingsTab.appendChild(card);
-    updateCloudStatus();
-    setInterval(updateCloudStatus, 5000);
-  }
-
-  // Patch saveToBank
-  if (typeof window.saveToBank === 'function') {
-    const orig = window.saveToBank;
-    window.saveToBank = function() {
-      const result = orig.apply(this, arguments);
-      try {
-        // After original save, push to Firebase
-        setTimeout(() => {
-          if (!db) return;
-          const bank = JSON.parse(localStorage.getItem('mtc_bank') || '{}');
-          const lastKey = 'mtc_last_saved';
-          const payload = {
-            bank: bank,
-            updatedAt: new Date().toISOString(),
-            by: 'Mr F. Tembo'
-          };
-          set(ref(db, 'mtc_exams/live_bank'), payload)
-            .then(() => {
-              firebaseStatus = 'connected';
-              updateCloudStatus();
-              console.log('Synced to Firebase Europe');
-            })
-            .catch(e => {
-              firebaseStatus = 'error';
-              console.error('Sync failed', e);
-            });
-          localStorage.setItem(lastKey, Date.now());
-        }, 300);
-      } catch(e) { console.error(e); }
-      return result;
-    };
-  }
-
-  // Listen for remote changes
-  if (db) {
-    onValue(ref(db, 'mtc_exams/live_bank'), (snap) => {
-      const data = snap.val();
-      if (data && data.bank) {
-        // Don't overwrite if we just saved
-        const last = parseInt(localStorage.getItem('mtc_last_saved')||'0');
-        if (Date.now() - last > 5000) {
-          localStorage.setItem('mtc_bank', JSON.stringify(data.bank));
-          if (typeof window.renderBank === 'function') window.renderBank();
-          console.log('Bank updated from cloud');
-        }
-      }
-    });
-  }
-});
-</script>
-<!-- === END FIREBASE SYNC === -->
-
-</body>\n</html>';
+  pub += '</body>\n</html>';
 
   return pub;
 }
@@ -4639,119 +4409,82 @@ eiRefreshSubjectList();
 eiInitDropZone();
 </script>
 
-<!-- === MTC FIREBASE SYNC - ADDED BY META AI - DO NOT REMOVE === -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const firebaseConfig = {
+<!-- ========== MTC CLOUD SYNC MODULE - ADDED FOR EXCELLENCE IN EDUCATION ========== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+// MTC CLOUD SYNC - Real-time PC <-> Phone
+const MTC_CLOUD_CONFIG = {
   apiKey: "AIzaSyD22_KYAqZxgJnEIRd1BrtoApcjM9DT6I0",
   authDomain: "mtc-exams.firebaseapp.com",
-  databaseURL: "https://mtc-exams-default-rtdb.europe-west1.firebasedatabase.app",
+  databaseURL: "https://mtc-exams-default-rtdb.europe-west1.firebasedatabase.app/",
   projectId: "mtc-exams",
   storageBucket: "mtc-exams.firebasestorage.app",
   messagingSenderId: "301948043220",
   appId: "1:301948043220:web:29494d7d52a283775f2041"
 };
 
-let db, firebaseStatus = 'connecting';
+let mtcCloudActive = false;
 try {
-  const app = initializeApp(firebaseConfig);
-  db = getDatabase(app);
-  firebaseStatus = 'connected';
-  console.log('MTC Firebase connected to Europe');
-} catch(e) {
-  console.error('Firebase init failed', e);
-  firebaseStatus = 'error';
-}
-
-function updateCloudStatus() {
-  const el = document.getElementById('mtc-cloud-status');
-  if (!el) return;
-  const dot = el.querySelector('.dot');
-  const txt = el.querySelector('.txt');
-  if (firebaseStatus === 'connected') {
-    dot.style.background = '#1a7a3f';
-    txt.innerHTML = 'Cloud: <b>Connected</b> • Europe (Belgium) • ' + new Date().toLocaleTimeString();
-  } else if (firebaseStatus === 'connecting') {
-    dot.style.background = '#c9a227';
-    txt.textContent = 'Cloud: Connecting...';
-  } else {
-    dot.style.background = '#c0392b';
-    txt.textContent = 'Cloud: Offline';
-  }
-}
-
-// Add status UI to Settings tab
-window.addEventListener('load', () => {
-  const settingsTab = document.getElementById('tab-settings');
-  if (settingsTab && !document.getElementById('mtc-cloud-status')) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="card-title">☁️ Cloud Sync Status</div>
-      <div id="mtc-cloud-status" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;">
-        <span class="dot" style="width:10px;height:10px;border-radius:50%;background:#8899cc;display:inline-block;"></span>
-        <span class="txt">Cloud: Initializing...</span>
-      </div>
-      <div style="margin-top:8px;font-size:0.75rem;color:#aab4d4;">Database: mtc-exams-default-rtdb.europe-west1.firebasedatabase.app</div>
-    `;
-    settingsTab.appendChild(card);
-    updateCloudStatus();
-    setInterval(updateCloudStatus, 5000);
-  }
-
-  // Patch saveToBank
-  if (typeof window.saveToBank === 'function') {
-    const orig = window.saveToBank;
-    window.saveToBank = function() {
-      const result = orig.apply(this, arguments);
-      try {
-        // After original save, push to Firebase
-        setTimeout(() => {
-          if (!db) return;
-          const bank = JSON.parse(localStorage.getItem('mtc_bank') || '{}');
-          const lastKey = 'mtc_last_saved';
-          const payload = {
-            bank: bank,
-            updatedAt: new Date().toISOString(),
-            by: 'Mr F. Tembo'
-          };
-          set(ref(db, 'mtc_exams/live_bank'), payload)
-            .then(() => {
-              firebaseStatus = 'connected';
-              updateCloudStatus();
-              console.log('Synced to Firebase Europe');
-            })
-            .catch(e => {
-              firebaseStatus = 'error';
-              console.error('Sync failed', e);
-            });
-          localStorage.setItem(lastKey, Date.now());
-        }, 300);
-      } catch(e) { console.error(e); }
-      return result;
+  firebase.initializeApp(MTC_CLOUD_CONFIG);
+  const db = firebase.database();
+  mtcCloudActive = true;
+  
+  // SYNC EXAM BANK
+  const _origSaveBank = window.saveBankData;
+  if(typeof _origSaveBank === 'function'){
+    window.saveBankData = function(bank){
+      _origSaveBank(bank);
+      if(mtcCloudActive){ db.ref('mtc/bank').set(bank); }
     };
   }
+  
+  db.ref('mtc/bank').on('value', (snap)=>{
+    const cloudBank = snap.val();
+    if(cloudBank){
+      localStorage.setItem('mtc_bank_idx', JSON.stringify(Object.keys(cloudBank)));
+      Object.keys(cloudBank).forEach(subj=>{
+        localStorage.setItem('mtc_bs_'+subj, JSON.stringify(cloudBank[subj]));
+      });
+      if(typeof renderBank === 'function') renderBank();
+    }
+  });
+  
+  // SYNC RESULTS
+  db.ref('mtc/results').on('value', (snap)=>{
+    const results = snap.val();
+    if(results){
+      localStorage.setItem('mtc_perf_records', JSON.stringify(results));
+      if(typeof renderPerfRecords === 'function') renderPerfRecords();
+    }
+  });
+  
+  const _origSetItem = localStorage.setItem;
+  localStorage.setItem = function(key, value){
+    _origSetItem.apply(this, arguments);
+    if(key === 'mtc_perf_records' && mtcCloudActive){
+      try{ db.ref('mtc/results').set(JSON.parse(value)); }catch(e){}
+    }
+  };
+} catch(e){ console.log('Cloud sync offline'); }
 
-  // Listen for remote changes
-  if (db) {
-    onValue(ref(db, 'mtc_exams/live_bank'), (snap) => {
-      const data = snap.val();
-      if (data && data.bank) {
-        // Don't overwrite if we just saved
-        const last = parseInt(localStorage.getItem('mtc_last_saved')||'0');
-        if (Date.now() - last > 5000) {
-          localStorage.setItem('mtc_bank', JSON.stringify(data.bank));
-          if (typeof window.renderBank === 'function') window.renderBank();
-          console.log('Bank updated from cloud');
-        }
-      }
-    });
-  }
-});
+// WHATSAPP PRO
+window.mtcSendResultWA = function(studentName, score, total, grade){
+  const settings = window.examState?.settings || {};
+  const waNum = settings.waNumber || '+260972619148';
+  const msg = `*${settings.waPrefix||'MTC'}*
+
+Student: ${studentName}
+Exam: ${settings.title||''}
+Score: ${score}/${total}
+Grade: ${grade}
+
+Mountain Tuition Centre
+Excellence in Education`;
+  window.open(`https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+};
 </script>
-<!-- === END FIREBASE SYNC === -->
+<!-- ========== END CLOUD SYNC ========== -->
 
 </body>
 </html>
