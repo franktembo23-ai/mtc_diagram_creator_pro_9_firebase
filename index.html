@@ -4412,78 +4412,78 @@ eiInitDropZone();
 <!-- ========== MTC CLOUD SYNC MODULE - ADDED FOR EXCELLENCE IN EDUCATION ========== -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<!-- Firebase SDK (compat for simple use) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// MTC CLOUD SYNC - Real-time PC <-> Phone
+// MTC CLOUD SYNC - Real-time PC <-> Phone (Europe)
 const MTC_CLOUD_CONFIG = {
   apiKey: "AIzaSyD22_KYAqZxgJnEIRd1BrtoApcjM9DT6I0",
   authDomain: "mtc-exams.firebaseapp.com",
-  databaseURL: "https://mtc-exams-default-rtdb.europe-west1.firebasedatabase.app/",
+  databaseURL: "https://mtc-exams-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "mtc-exams",
   storageBucket: "mtc-exams.firebasestorage.app",
   messagingSenderId: "301948043220",
   appId: "1:301948043220:web:29494d7d52a283775f2041"
 };
 
-let mtcCloudActive = false;
+let mtcCloudDB = null;
 try {
   firebase.initializeApp(MTC_CLOUD_CONFIG);
-  const db = firebase.database();
-  mtcCloudActive = true;
+  mtcCloudDB = firebase.database();
+  console.log('✅ MTC Firebase Connected - Europe');
   
-  // SYNC EXAM BANK
-  const _origSaveBank = window.saveBankData;
-  if(typeof _origSaveBank === 'function'){
-    window.saveBankData = function(bank){
-      _origSaveBank(bank);
-      if(mtcCloudActive){ db.ref('mtc/bank').set(bank); }
+  // Show status in Exam Settings
+  window.addEventListener('load', () => {
+    const settingsTab = document.getElementById('tab-settings');
+    if (settingsTab && !document.getElementById('mtc-sync-status')) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = '<div class="card-title">☁️ Cloud Sync</div><div id="mtc-sync-status" style="color:#1a7a3f;font-weight:700;">● Connected to Firebase Europe</div><div style="font-size:0.75rem;color:#aab4d4;margin-top:4px;">Database: mtc-exams-default-rtdb (Belgium)</div>';
+      settingsTab.appendChild(div);
+    }
+  });
+
+  // Patch saveToBank (your actual function)
+  const origSaveToBank = window.saveToBank;
+  if (typeof origSaveToBank === 'function') {
+    window.saveToBank = function() {
+      const result = origSaveToBank.apply(this, arguments);
+      setTimeout(() => {
+        try {
+          const bank = JSON.parse(localStorage.getItem('mtc_bank') || '{}');
+          mtcCloudDB.ref('mtc_exams/live_bank').set({
+            bank: bank,
+            updatedAt: new Date().toISOString(),
+            by: 'Mr Tembo'
+          });
+          console.log('☁️ Synced to cloud');
+        } catch(e) { console.error('Sync error', e); }
+      }, 300);
+      return result;
     };
   }
-  
-  db.ref('mtc/bank').on('value', (snap)=>{
-    const cloudBank = snap.val();
-    if(cloudBank){
-      localStorage.setItem('mtc_bank_idx', JSON.stringify(Object.keys(cloudBank)));
-      Object.keys(cloudBank).forEach(subj=>{
-        localStorage.setItem('mtc_bs_'+subj, JSON.stringify(cloudBank[subj]));
-      });
-      if(typeof renderBank === 'function') renderBank();
+
+  // Listen for cloud changes (phone ↔ PC)
+  mtcCloudDB.ref('mtc_exams/live_bank').on('value', (snap) => {
+    const data = snap.val();
+    if (data && data.bank) {
+      const current = localStorage.getItem('mtc_bank');
+      const cloudStr = JSON.stringify(data.bank);
+      if (current !== cloudStr) {
+        localStorage.setItem('mtc_bank', cloudStr);
+        if (typeof renderBank === 'function') renderBank();
+        console.log('☁️ Bank updated from cloud');
+      }
     }
   });
-  
-  // SYNC RESULTS
-  db.ref('mtc/results').on('value', (snap)=>{
-    const results = snap.val();
-    if(results){
-      localStorage.setItem('mtc_perf_records', JSON.stringify(results));
-      if(typeof renderPerfRecords === 'function') renderPerfRecords();
-    }
-  });
-  
-  const _origSetItem = localStorage.setItem;
-  localStorage.setItem = function(key, value){
-    _origSetItem.apply(this, arguments);
-    if(key === 'mtc_perf_records' && mtcCloudActive){
-      try{ db.ref('mtc/results').set(JSON.parse(value)); }catch(e){}
-    }
-  };
-} catch(e){ console.log('Cloud sync offline'); }
 
-// WHATSAPP PRO
-window.mtcSendResultWA = function(studentName, score, total, grade){
-  const settings = window.examState?.settings || {};
-  const waNum = settings.waNumber || '+260972619148';
-  const msg = `*${settings.waPrefix||'MTC'}*
-
-Student: ${studentName}
-Exam: ${settings.title||''}
-Score: ${score}/${total}
-Grade: ${grade}
-
-Mountain Tuition Centre
-Excellence in Education`;
-  window.open(`https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
-};
+} catch(e) {
+  console.error('Firebase init failed', e);
+}
 </script>
+
 <!-- ========== END CLOUD SYNC ========== -->
 
 </body>
