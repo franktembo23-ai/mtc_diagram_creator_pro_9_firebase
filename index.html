@@ -4413,11 +4413,12 @@ eiInitDropZone();
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Firebase SDK (compat for simple use) -->
+
+<!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// MTC CLOUD SYNC - Real-time PC <-> Phone (Europe)
+// MTC CLOUD SYNC - Real-time PC <-> Phone (Europe) - FIXED
 const MTC_CLOUD_CONFIG = {
   apiKey: "AIzaSyD22_KYAqZxgJnEIRd1BrtoApcjM9DT6I0",
   authDomain: "mtc-exams.firebaseapp.com",
@@ -4434,7 +4435,6 @@ try {
   mtcCloudDB = firebase.database();
   console.log('✅ MTC Firebase Connected - Europe');
   
-  // Show status in Exam Settings
   window.addEventListener('load', () => {
     const settingsTab = document.getElementById('tab-settings');
     if (settingsTab && !document.getElementById('mtc-sync-status')) {
@@ -4445,37 +4445,46 @@ try {
     }
   });
 
-  // Patch saveToBank (your actual function)
+  // Patch saveToBank to use REAL bank data
   const origSaveToBank = window.saveToBank;
   if (typeof origSaveToBank === 'function') {
     window.saveToBank = function() {
       const result = origSaveToBank.apply(this, arguments);
       setTimeout(() => {
         try {
-          const bank = JSON.parse(localStorage.getItem('mtc_bank') || '{}');
+          // Use the app's own getBankData() - this gets the REAL data
+          const bank = (typeof getBankData === 'function') ? getBankData() : {};
           mtcCloudDB.ref('mtc_exams/live_bank').set({
             bank: bank,
             updatedAt: new Date().toISOString(),
             by: 'Mr Tembo'
           });
-          console.log('☁️ Synced to cloud');
+          console.log('☁️ Synced to cloud', Object.keys(bank));
         } catch(e) { console.error('Sync error', e); }
-      }, 300);
+      }, 500);
       return result;
     };
   }
 
-  // Listen for cloud changes (phone ↔ PC)
+  // Listen for cloud changes
   mtcCloudDB.ref('mtc_exams/live_bank').on('value', (snap) => {
     const data = snap.val();
     if (data && data.bank) {
-      const current = localStorage.getItem('mtc_bank');
-      const cloudStr = JSON.stringify(data.bank);
-      if (current !== cloudStr) {
-        localStorage.setItem('mtc_bank', cloudStr);
-        if (typeof renderBank === 'function') renderBank();
-        console.log('☁️ Bank updated from cloud');
-      }
+      try {
+        const cloudBank = data.bank;
+        const localBank = (typeof getBankData === 'function') ? getBankData() : {};
+        // Only update if different
+        if (JSON.stringify(localBank) !== JSON.stringify(cloudBank)) {
+          // Save each subject using the app's storage format
+          const subjects = Object.keys(cloudBank);
+          localStorage.setItem('mtc_bank_idx', JSON.stringify(subjects));
+          subjects.forEach(subj => {
+            localStorage.setItem('mtc_bs_' + subj, JSON.stringify(cloudBank[subj]));
+          });
+          if (typeof renderBank === 'function') renderBank();
+          console.log('☁️ Bank updated from cloud', subjects);
+        }
+      } catch(e) { console.error('Cloud restore error', e); }
     }
   });
 
@@ -4483,7 +4492,6 @@ try {
   console.error('Firebase init failed', e);
 }
 </script>
-
 <!-- ========== END CLOUD SYNC ========== -->
 
 </body>
